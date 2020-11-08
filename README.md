@@ -1,4 +1,6 @@
 # flash_ml
+
+Sample use case:
 ```
 from flash_ml/build_model import build model
 
@@ -9,7 +11,7 @@ example_input = [["input", 32, 32, 3], ["conv2d", 6, 5], ["relu"], ["maxpool2d",
 build_model(example_input)
 ```
 
-example_output
+sample output:
 
 <i> model.py </i>
 ```
