@@ -1,7 +1,6 @@
 ### 
 ### 
-from flask import Flask
-import requests
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -155,10 +154,10 @@ def build_training_loop(epoch, lr, momentum):
     file1.write("if __name__=='__main__':\n")
     file1.write("    train()")
 
-@app.route("/", methods=["GET"])
+@app.route("/", methods=["GET", "POST"])
 def model_builder():
-    json_data = requests.get_json()
-
+    json_data = request.json
+    print(json_data)
     # extract the required parameters
     layers = json_data["layers"]
 
