@@ -1,5 +1,9 @@
 ### 
 ### 
+from flask import Flask
+import requests
+
+app = Flask(__name__)
 
 def build_model(operations):
     # open file + clear file
@@ -148,21 +152,30 @@ def build_training_loop(epoch, lr, momentum):
     file1.write("\n")
     file1.write("    print('Finished Training')\n")
     file1.write("\n")
-    file1.write("if __name__=='__main__':")
+    file1.write("if __name__=='__main__':\n")
     file1.write("    train()")
 
-if __name__=="__main__":
-    test_ops = [["input", 32, 32, 3], ["conv2d", 6, 5], ["relu"], ["maxpool2d", 2, 2],
-                ["conv2d", 16, 5], ["relu"], ["maxpool2d", 2, 2], ["dense", 120],
-                ["relu"], ["dense", 84], ["relu"], ["dense", 10]]
-    epochs = 2
-    learning_rate = 0.001
-    momentum = 0.9
+@app.route("/", methods=["GET"])
+def model_builder():
+    json_data = requests.get_json()
 
-    dataset_name = "CIFAR10"
+    # extract the required parameters
+    layers = json_data["layers"]
 
-    build_model(test_ops)
+    hyperparameters = json_data["hyperparameters"]
+    epochs = hyperparameters["epochs"]
+    learning_rate = hyperparameters["learning_rate"]
+    momentum = hyperparameters["momentum"]
+
+    dataset_name = json_data["dataset_name"]
+
+    # build the text files
+    build_model(layers)
     build_dataset(dataset_name)
     build_training_loop(epochs, learning_rate, momentum)
 
+    # TODO: Json the text files and return them
+
+if __name__=="__main__":
+    app.run(debug=True)
 
