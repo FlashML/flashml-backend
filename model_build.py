@@ -91,7 +91,7 @@ def write_dense(input_file, last_output_size, nodes, index):
         input_file.write("        " + variable[:-3] + " = " + line + "\n")
         return [variable]
 
-def build_dataset(dataset_name):
+def build_dataset(dataset_name, batch_size):
     out_file = open("train.py", "a")
     out_file.truncate(0)
     
@@ -112,19 +112,19 @@ def build_dataset(dataset_name):
     out_file.write("\n")
     out_file.write(f"    testset = torchvision.datasets.{dataset_name}(root='./data', train=False,\n")
     out_file.write("                                    download=True, transform=transform)\n")
-    out_file.write("    testloader = torch.utils.data.DataLoader(testset, batch_size=4,\n")
+    out_file.write(f"    testloader = torch.utils.data.DataLoader(testset, batch_size={batch_size},\n")
     out_file.write("                                             shuffle=False, num_workers=2)\n")
     out_file.write("    classes = ('plane', 'car', 'bird', 'cat',\n")
     out_file.write("               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')\n")
 
-def build_training_loop(epoch, lr, momentum):
+def build_training_loop(epoch, lr, momentum, loss):
     file1 = open("train.py", "a")
     file1.write("\n")
     file1.write("    from model import Net\n")
     file1.write("    import torch.optim as optim\n")
     file1.write("\n")
     file1.write("    net = Net()\n")
-    file1.write("    criterion = nn.CrossEntropyLoss()\n")
+    file1.write(f"    criterion = nn.{loss}()\n")
     file1.write(f"    optimizer = optim.SGD(net.parameters(), lr={lr}, momentum={momentum})\n")
     file1.write("\n")
     file1.write(f"    for epoch in range({epoch}):\n")
@@ -165,13 +165,16 @@ def model_builder():
     epochs = hyperparameters["epochs"]
     learning_rate = hyperparameters["learning_rate"]
     momentum = hyperparameters["momentum"]
-
+    batch_size = hyperparameters["batch_size"]
+    loss = hyperparameters["loss"]
     dataset_name = json_data["dataset_name"]
 
     # build the text files
     build_model(layers)
-    build_dataset(dataset_name)
-    build_training_loop(epochs, learning_rate, momentum)
+    build_dataset(dataset_name, batch_size)
+    build_training_loop(epochs, learning_rate, momentum, loss)
+    print("Success")
+    return "SUCCESS"
 
     # TODO: Json the text files and return them
 
