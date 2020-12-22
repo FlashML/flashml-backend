@@ -91,7 +91,7 @@ def write_dense(input_file, last_output_size, nodes, index):
         input_file.write("        " + variable[:-3] + " = " + line + "\n")
         return [variable]
 
-def build_dataset(dataset_name, batch_size):
+def build_dataset(dataset_name, batch_size, num_workers):
     out_file = open("train.py", "a")
     out_file.truncate(0)
     
@@ -113,11 +113,9 @@ def build_dataset(dataset_name, batch_size):
     out_file.write(f"    testset = torchvision.datasets.{dataset_name}(root='./data', train=False,\n")
     out_file.write("                                    download=True, transform=transform)\n")
     out_file.write(f"    testloader = torch.utils.data.DataLoader(testset, batch_size={batch_size},\n")
-    out_file.write("                                             shuffle=False, num_workers=2)\n")
-    out_file.write("    classes = ('plane', 'car', 'bird', 'cat',\n")
-    out_file.write("               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')\n")
+    out_file.write("                                             shuffle=False, num_workers={num_workers})\n")
 
-def build_training_loop(epoch, lr, momentum, loss):
+def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1 = open("train.py", "a")
     file1.write("\n")
     file1.write("    from model import Net\n")
@@ -127,7 +125,7 @@ def build_training_loop(epoch, lr, momentum, loss):
     file1.write(f"    criterion = nn.{loss}()\n")
     file1.write(f"    optimizer = optim.SGD(net.parameters(), lr={lr}, momentum={momentum})\n")
     file1.write("\n")
-    file1.write(f"    for epoch in range({epoch}):\n")
+    file1.write(f"    for EPOCH in range({epoch}):\n")
     file1.write("        running_loss = 0.0\n")
     file1.write("        for i, data in enumerate(trainloader, 0):\n")
     file1.write("            # get the inputs; data is a list of [inputs, labels]\n")
@@ -146,8 +144,14 @@ def build_training_loop(epoch, lr, momentum, loss):
     file1.write("            running_loss += loss.item()\n")
     file1.write("            if i % 2000 == 1999: # print every 2000 mini-batches\n")
     file1.write("                print('[%d, %5d] loss: %.3f' %\n")
-    file1.write("                    (epoch + 1, i + 1, running_loss / 2000))\n")
+    file1.write("                    (EPOCH + 1, i + 1, running_loss / 2000))\n")
     file1.write("                running_loss = 0.0\n")
+    file1.write("       torch.save({\n")
+    file1.write("                   'epoch': EPOCH,\n")
+    file1.write("                   'model_state_dict': net.state_dict(),\n")
+    file1.write("                   'optimizer_state_dict': optimizer.state_dict(),\n")
+    file1.write("                   'loss': loss,\n")
+    file1.write(f"                   }, {PATH})\n")
     file1.write("\n")
     file1.write("    print('Finished Training')\n")
     file1.write("\n")
@@ -166,13 +170,15 @@ def model_builder():
     learning_rate = hyperparameters["learning_rate"]
     momentum = hyperparameters["momentum"]
     batch_size = hyperparameters["batch_size"]
+    num_wokers = hyperparameters["num_workers"]
     loss = hyperparameters["loss"]
     dataset_name = json_data["dataset_name"]
+    checkpoint_path = json_data["checkpoint_path"]
 
     # build the text files
     build_model(layers)
-    build_dataset(dataset_name, batch_size)
-    build_training_loop(epochs, learning_rate, momentum, loss)
+    build_dataset(dataset_name, batch_size, num_workers)
+    build_training_loop(epochs, learning_rate, momentum, loss, checkpoint_path)
     print("Success")
     return "SUCCESS"
 
