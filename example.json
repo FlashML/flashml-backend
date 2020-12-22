@@ -1,0 +1,16 @@
+{"layers": [["input", 32, 32, 3], ["conv2d", 6, 5], ["relu"], ["maxpool2d", 2, 2],
+       ["conv2d", 16, 5], ["relu"], ["maxpool2d", 2, 2], ["dense", 120],
+       ["relu"], ["dense", 84], ["relu"], ["dense", 10]], 
+ "hyperparameters": {
+	 "epochs": 3,
+	 "learning_rate": 0.1,
+	 "momentum": 0.8,
+	 "batch_size": 32,
+	 "num_workers":, 4,
+	 "loss": "CrossEntropyLoss"
+ },
+"checkpoint_path": "model.pt",
+"dataset_name": "CIFAR10"
+}
+	
+
