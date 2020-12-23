@@ -168,7 +168,6 @@ def model_builder():
     print(json_data)
     # extract the required parameters
     layers = json_data["layers"]
-
     hyperparameters = json_data["hyperparameters"]
     epochs = hyperparameters["epochs"]
     learning_rate = hyperparameters["learning_rate"]
@@ -186,7 +185,12 @@ def model_builder():
     print("Success")
     return send_file("model.py")
 
-    # TODO: Json the text files and return them
+
+@app.route("/api/request_train", methods=["GET", "POST"])
+def request_train():
+    print("Success")
+    return send_file("train.py")
+
 
 if __name__=="__main__":
     app.run(debug=True)
