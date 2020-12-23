@@ -1,8 +1,14 @@
 ### 
 ### 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+
+import sys
+
+print(sys.path)
 
 app = Flask(__name__)
+CORS(app)
 
 def build_model(operations):
     # open file + clear file
@@ -146,19 +152,20 @@ def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1.write("                print('[%d, %5d] loss: %.3f' %\n")
     file1.write("                    (EPOCH + 1, i + 1, running_loss / 2000))\n")
     file1.write("                running_loss = 0.0\n")
-    file1.write("       torch.save({\n")
+    file1.write("       torch.save(dict(\n")
     file1.write("                   'epoch': EPOCH,\n")
     file1.write("                   'model_state_dict': net.state_dict(),\n")
     file1.write("                   'optimizer_state_dict': optimizer.state_dict(),\n")
     file1.write("                   'loss': loss,\n")
-    file1.write(f"                   }, {PATH})\n")
+    file1.write(f"                   ), {PATH})\n")
     file1.write("\n")
     file1.write("    print('Finished Training')\n")
     file1.write("\n")
     file1.write("if __name__=='__main__':\n")
     file1.write("    train()")
 
-@app.route("/", methods=["GET", "POST"])
+
+@app.route("/api/create_code", methods=["GET", "POST"])
 def model_builder():
     json_data = request.json
     print(json_data)
@@ -170,7 +177,7 @@ def model_builder():
     learning_rate = hyperparameters["learning_rate"]
     momentum = hyperparameters["momentum"]
     batch_size = hyperparameters["batch_size"]
-    num_wokers = hyperparameters["num_workers"]
+    num_workers = hyperparameters["num_workers"]
     loss = hyperparameters["loss"]
     dataset_name = json_data["dataset_name"]
     checkpoint_path = json_data["checkpoint_path"]
@@ -180,7 +187,7 @@ def model_builder():
     build_dataset(dataset_name, batch_size, num_workers)
     build_training_loop(epochs, learning_rate, momentum, loss, checkpoint_path)
     print("Success")
-    return "SUCCESS"
+    return send_file("model.py")
 
     # TODO: Json the text files and return them
 
