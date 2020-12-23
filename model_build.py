@@ -1,5 +1,3 @@
-### 
-### 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 
@@ -114,12 +112,12 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write(f"    trainset = torchvision.datasets.{dataset_name}(root='./data', train=True,\n")
     out_file.write("                                        download=True, transform=transform)\n")
     out_file.write("    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,\n")
-    out_file.write("                                              shuffle=True, num_workers=2)\n")
+    out_file.write(f"                                              shuffle=True, num_workers={num_workers})\n")
     out_file.write("\n")
     out_file.write(f"    testset = torchvision.datasets.{dataset_name}(root='./data', train=False,\n")
     out_file.write("                                    download=True, transform=transform)\n")
     out_file.write(f"    testloader = torch.utils.data.DataLoader(testset, batch_size={batch_size},\n")
-    out_file.write("                                             shuffle=False, num_workers={num_workers})\n")
+    out_file.write(f"                                             shuffle=False, num_workers={num_workers})\n")
 
 def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1 = open("train.py", "a")
@@ -152,12 +150,11 @@ def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1.write("                print('[%d, %5d] loss: %.3f' %\n")
     file1.write("                    (EPOCH + 1, i + 1, running_loss / 2000))\n")
     file1.write("                running_loss = 0.0\n")
-    file1.write("       torch.save(dict(\n")
-    file1.write("                   'epoch': EPOCH,\n")
-    file1.write("                   'model_state_dict': net.state_dict(),\n")
-    file1.write("                   'optimizer_state_dict': optimizer.state_dict(),\n")
-    file1.write("                   'loss': loss,\n")
-    file1.write(f"                   ), {PATH})\n")
+    file1.write("        torch.save(dict(epoch=EPOCH,\n")
+    file1.write("                   model_state_dict= net.state_dict(),\n")
+    file1.write("                   optimizer_state_dict= optimizer.state_dict(),\n")
+    file1.write("                   loss= loss,\n")
+    file1.write(f"                  ), '{PATH}')\n")
     file1.write("\n")
     file1.write("    print('Finished Training')\n")
     file1.write("\n")
