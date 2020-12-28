@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from zipfile import ZipFile
 
 import sys
 
@@ -182,8 +183,17 @@ def model_builder():
     build_model(layers)
     build_dataset(dataset_name, batch_size, num_workers)
     build_training_loop(epochs, learning_rate, momentum, loss, checkpoint_path)
+    
+    # create a zip like object
+    zipObj = ZipFile('outbound.zip', 'w')
+
+    # add multiple files to the zip
+    zipObj.write('train.py')
+    zipObj.write('model.py')
+
+    zipObj.close()
     print("Success")
-    return send_file("model.py")
+    return send_file("outbound.zip")
 
 
 @app.route("/api/request_train", methods=["GET", "POST"])
