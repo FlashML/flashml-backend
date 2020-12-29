@@ -190,9 +190,8 @@ def model_builder():
     with ZipFile('flashml.zip', 'w') as zipObj:
         # Iterate over all the files in a directory
 
-        zipObj = ZipFile('train.py', basename('flashML/train.py'))
-        zipObj = ZipFile('model.py', basename('flashML/model.py'))
-
+        zipObj.write('train.py', basename('flashML/train.py'))
+        zipObj.write('model.py', basename('flashML/model.py'))
     print("Success")
     return send_file("flashml.zip")
 
