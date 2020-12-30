@@ -12,7 +12,7 @@ CORS(app)
 
 def build_model(operations):
     # open file + clear file
-    file1 = open("model.py", "a")
+    file1 = open("data/model.py", "a")
     file1.truncate(0)
 
     track_index = {"conv2d": 0, "maxpool2d": 0, "relu":0, "dense":0}
@@ -98,7 +98,7 @@ def write_dense(input_file, last_output_size, nodes, index):
         return [variable]
 
 def build_dataset(dataset_name, batch_size, num_workers):
-    out_file = open("train.py", "a")
+    out_file = open("data/train.py", "a")
     out_file.truncate(0)
     
     out_file.write("import torch\n")
@@ -122,7 +122,7 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write(f"                                             shuffle=False, num_workers={num_workers})\n")
 
 def build_training_loop(epoch, lr, momentum, loss, PATH):
-    file1 = open("train.py", "a")
+    file1 = open("data/train.py", "a")
     file1.write("\n")
     file1.write("    from model import Net\n")
     file1.write("    import torch.optim as optim\n")
@@ -186,19 +186,19 @@ def model_builder():
     build_training_loop(epochs, learning_rate, momentum, loss, checkpoint_path)
 
     # create a zip like object
-    with ZipFile('flashml.zip', 'w') as zipObj:
+    with ZipFile('data/flashml.zip', 'w') as zipObj:
         # Iterate over all the files in a directory
 
-        zipObj.write('train.py', basename('flashML/train.py'))
-        zipObj.write('model.py', basename('flashML/model.py'))
+        zipObj.write('data/train.py', basename('flashML/train.py'))
+        zipObj.write('data/model.py', basename('flashML/model.py'))
     print("Success")
-    return send_file("../flashml.zip")
+    return send_file("../data/flashml.zip")
 
 
 @app.route("/api/request_train", methods=["GET", "POST"])
 def request_train():
     print("Success")
-    return send_file("../train.py")
+    return send_file("../data/train.py")
 
 
 if __name__=="__main__":
