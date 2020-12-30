@@ -6,9 +6,8 @@ from os.path import basename
 import os
 import sys
 
-print(sys.path)
+from app import app
 
-app = Flask(__name__)
 CORS(app)
 
 def build_model(operations):
@@ -193,13 +192,13 @@ def model_builder():
         zipObj.write('train.py', basename('flashML/train.py'))
         zipObj.write('model.py', basename('flashML/model.py'))
     print("Success")
-    return send_file("flashml.zip")
+    return send_file("../flashml.zip")
 
 
 @app.route("/api/request_train", methods=["GET", "POST"])
 def request_train():
     print("Success")
-    return send_file("train.py")
+    return send_file("../train.py")
 
 
 if __name__=="__main__":
