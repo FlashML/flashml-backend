@@ -191,6 +191,8 @@ def model_builder():
 
         zipObj.write('data/train.py', basename('flashML/train.py'))
         zipObj.write('data/model.py', basename('flashML/model.py'))
+        zipObj.write('data/README.md', basename('flashML/README.md'))
+        zipObj.write('data/requirements.txt', basename('flashML/requirements.txt'))
     print("Success")
     return send_file("../data/flashml.zip")
 
