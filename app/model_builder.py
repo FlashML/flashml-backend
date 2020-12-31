@@ -4,7 +4,7 @@ from os.path import basename
 import os
 import sys
 
-def build_model(operations):
+def build_model(operations, batch_size):
     # open file + clear file
     file1 = open("data/model.py", "a")
     file1.truncate(0)
@@ -38,7 +38,7 @@ def build_model(operations):
             forward_operations.append(variable)
 
         elif ops[0] == "dense":
-            variable = write_dense(file1, last_output_size, ops[1], index)
+            variable = write_dense(file1, last_output_size, ops[1], index, batch_size)
             forward_operations.extend(variable)
             last_output_size = ops[1]
 
@@ -76,10 +76,10 @@ def write_relu(input_file, index):
     input_file.write("        " + variable[:-3] + " = " + line + "\n")
     return variable
 
-def write_dense(input_file, last_output_size, nodes, index):
+def write_dense(input_file, last_output_size, nodes, index, batch_size):
     if index==0:
         last_output_size = last_output_size * 5 * 5
-        variable_2 = f"x = x.view(-1, {last_output_size})"
+        variable_2 = f"x = x.view({batch_size}, -1)"
         variable = f"self.linear_{index}(x)"
         line = f"nn.Linear({last_output_size}, {nodes})"
         input_file.write("        " + variable[:-3] + " = " + line + "\n")
@@ -94,7 +94,7 @@ def write_dense(input_file, last_output_size, nodes, index):
 def build_dataset(dataset_name, batch_size, num_workers):
     out_file = open("data/train.py", "a")
     out_file.truncate(0)
-    
+
     out_file.write("import torch\n")
     out_file.write("import torch.nn as nn\n")
     out_file.write("import torchvision\n")
