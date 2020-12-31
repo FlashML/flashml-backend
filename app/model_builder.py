@@ -18,16 +18,23 @@ def build_model(operations, batch_size):
     file1.write("    def __init__(self):\n")
     file1.write("        super(Net, self).__init__()\n")
 
-    last_output_size = operations[0][3]
+    last_width_size = operations[0][1] # input width
+    last_height_size = operations[0][2] # input height
+    last_filter_size = operations[0][3] # input channels
+
     forward_operations = []
     for ops in operations[1:]:
         index = track_index[ops[0]]
         track_index[ops[0]] += 1
 
         if ops[0] == "conv2d":
-            variable = write_conv_2d(file1, last_output_size, ops[1], ops[2], index)
+            kernel_size = ops[2]
+            new_filter_size = ops[1]
+            variable = write_conv_2d(file1, last_filter_size, new_filter_size, kernel_size, index)
             forward_operations.append(variable)
-            last_output_size = ops[1]
+            last_filter_size = ops[1]
+            last_width_size = last_width_size - kernel_size + 1
+            last_height_size = last_height_size - kernel_size + 1
 
         elif ops[0] == "maxpool2d":
             variable = write_pool_2d(file1, ops[1], ops[2], index)
@@ -38,9 +45,12 @@ def build_model(operations, batch_size):
             forward_operations.append(variable)
 
         elif ops[0] == "dense":
-            variable = write_dense(file1, last_output_size, ops[1], index, batch_size)
+            num_weights = ops[1]
+            first_multiplier = last_height_size * last_width_size
+            variable = write_dense(file1, last_filter_size, num_weights,
+                                   index, batch_size, first_multiplier)
             forward_operations.extend(variable)
-            last_output_size = ops[1]
+            last_filter_size = num_weights
 
     file1.write("\n\n")
     file1.write("    def forward(self, x):\n")
@@ -58,9 +68,9 @@ def setup_imports(input_file):
     input_file.write("import torchvision\n")
     input_file.write("import torchvision.transforms as transforms\n")
 
-def write_conv_2d(input_file, last_output_size, filters, kernel, index):
+def write_conv_2d(input_file, last_filter_size, filters, kernel, index):
     variable = f"self.conv2D_{index}(x)"
-    line = f"nn.Conv2d({last_output_size}, {filters}, {kernel})"
+    line = f"nn.Conv2d({last_filter_size}, {filters}, {kernel})"
     input_file.write("        " + variable[:-3] + " = " + line + "\n")
     return variable
 
@@ -76,9 +86,9 @@ def write_relu(input_file, index):
     input_file.write("        " + variable[:-3] + " = " + line + "\n")
     return variable
 
-def write_dense(input_file, last_output_size, nodes, index, batch_size):
+def write_dense(input_file, last_output_size, nodes, index, batch_size, multiplier):
     if index==0:
-        last_output_size = last_output_size * 5 * 5
+        last_output_size = last_output_size * multiplier
         variable_2 = f"x = x.view({batch_size}, -1)"
         variable = f"self.linear_{index}(x)"
         line = f"nn.Linear({last_output_size}, {nodes})"
@@ -108,12 +118,14 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write(f"    trainset = torchvision.datasets.{dataset_name}(root='./data', train=True,\n")
     out_file.write("                                        download=True, transform=transform)\n")
     out_file.write(f"    trainloader = torch.utils.data.DataLoader(trainset, batch_size={batch_size},\n")
-    out_file.write(f"                                              shuffle=True, num_workers={num_workers})\n")
+    out_file.write(f"                                              shuffle=True, num_workers={num_workers},\n")
+    out_file.write("                                              drop_last=True)")
     out_file.write("\n")
     out_file.write(f"    testset = torchvision.datasets.{dataset_name}(root='./data', train=False,\n")
     out_file.write("                                    download=True, transform=transform)\n")
     out_file.write(f"    testloader = torch.utils.data.DataLoader(testset, batch_size={batch_size},\n")
-    out_file.write(f"                                             shuffle=False, num_workers={num_workers})\n")
+    out_file.write(f"                                             shuffle=False, num_workers={num_workers},\n")
+    out_file.write(f"                                             drop_last=True)\n")
 
 def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1 = open("data/train.py", "a")
@@ -142,9 +154,10 @@ def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1.write("\n")
     file1.write("            # print statistics\n")
     file1.write("            running_loss += loss.item()\n")
-    file1.write("            if i % 2000 == 1999: # print every 2000 mini-batches\n")
+    file1.write("            PRINT_CYCLE = 100\n")
+    file1.write("            if i % PRINT_CYCLE  == 0 and i != 0: # print every PRINT_CYCLE mini-batches\n")
     file1.write("                print('[%d, %5d] loss: %.3f' %\n")
-    file1.write("                    (EPOCH + 1, i + 1, running_loss / 2000))\n")
+    file1.write("                    (EPOCH, i, running_loss / PRINT_CYCLE))\n")
     file1.write("                running_loss = 0.0\n")
     file1.write("        torch.save(dict(epoch=EPOCH,\n")
     file1.write("                   model_state_dict= net.state_dict(),\n")
