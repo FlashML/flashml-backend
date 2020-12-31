@@ -114,7 +114,7 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write("\n")
     out_file.write(f"    trainset = torchvision.datasets.{dataset_name}(root='./data', train=True,\n")
     out_file.write("                                        download=True, transform=transform)\n")
-    out_file.write("    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,\n")
+    out_file.write(f"    trainloader = torch.utils.data.DataLoader(trainset, batch_size={batch_size},\n")
     out_file.write(f"                                              shuffle=True, num_workers={num_workers})\n")
     out_file.write("\n")
     out_file.write(f"    testset = torchvision.datasets.{dataset_name}(root='./data', train=False,\n")
@@ -178,6 +178,10 @@ def model_builder():
     batch_size = hyperparameters["batch_size"]
     num_workers = hyperparameters["num_workers"]
     loss = hyperparameters["loss"]
+    if loss == "L2":
+        loss = "MSELoss"
+    if loss == "CE":
+        loss = "CrossEntropyLoss"
     dataset_name = json_data["dataset_name"]
     checkpoint_path = json_data["checkpoint_path"]
 
