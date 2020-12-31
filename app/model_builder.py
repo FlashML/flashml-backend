@@ -1,19 +1,12 @@
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS
 from zipfile import ZipFile
 from os.path import basename
 
 import os
 import sys
 
-print(sys.path)
-
-app = Flask(__name__)
-CORS(app)
-
 def build_model(operations):
     # open file + clear file
-    file1 = open("model.py", "a")
+    file1 = open("data/model.py", "a")
     file1.truncate(0)
 
     track_index = {"conv2d": 0, "maxpool2d": 0, "relu":0, "dense":0}
@@ -99,7 +92,7 @@ def write_dense(input_file, last_output_size, nodes, index):
         return [variable]
 
 def build_dataset(dataset_name, batch_size, num_workers):
-    out_file = open("train.py", "a")
+    out_file = open("data/train.py", "a")
     out_file.truncate(0)
     
     out_file.write("import torch\n")
@@ -123,7 +116,7 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write(f"                                             shuffle=False, num_workers={num_workers})\n")
 
 def build_training_loop(epoch, lr, momentum, loss, PATH):
-    file1 = open("train.py", "a")
+    file1 = open("data/train.py", "a")
     file1.write("\n")
     file1.write("    from model import Net\n")
     file1.write("    import torch.optim as optim\n")
