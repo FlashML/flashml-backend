@@ -18,9 +18,9 @@ def build_model(operations, batch_size):
     file1.write("    def __init__(self):\n")
     file1.write("        super(Net, self).__init__()\n")
 
-    last_width_size = operations[0][1] # input width
-    last_height_size = operations[0][2] # input height
-    last_filter_size = operations[0][3] # input channels
+    last_width_size = int(operations[0][1]) # input width
+    last_height_size = int(operations[0][2]) # input height
+    last_filter_size = int(operations[0][3]) # input channels
 
     forward_operations = []
     for ops in operations[1:]:
@@ -127,7 +127,7 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write(f"                                             shuffle=False, num_workers={num_workers},\n")
     out_file.write(f"                                             drop_last=True)\n")
 
-def build_training_loop(epoch, lr, momentum, loss, PATH):
+def build_training_loop(epoch, lr, momentum, loss, PATH, dataset_name):
     file1 = open("data/train.py", "a")
     file1.write("\n")
     file1.write("    from model import Net\n")
@@ -148,6 +148,12 @@ def build_training_loop(epoch, lr, momentum, loss, PATH):
     file1.write("\n")
     file1.write("            # forward + backward + optimize\n")
     file1.write("            outputs = net(inputs)\n")
+    if loss == "MSELoss" or loss == "L1Loss":
+        if dataset_name == "CIFAR-10" or dataset_name == "FashionMNIST":
+            num_classes = 10
+        elif dataset_name == "CIFAR-100":
+            num_classes = 100
+        file1.write(f"            labels = nn.functional.one_hot(labels, num_classes={num_classes}).float()\n")
     file1.write("            loss = criterion(outputs, labels)\n")
     file1.write("            loss.backward()\n")
     file1.write("            optimizer.step()\n")

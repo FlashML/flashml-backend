@@ -19,13 +19,21 @@ def model_builder():
     batch_size = hyperparameters["batch_size"]
     num_workers = hyperparameters["num_workers"]
     loss = hyperparameters["loss"]
+    if loss == "L2":
+        loss = "MSELoss"
+    elif loss == "L1":
+        loss = "L1Loss"
+    elif loss == "CE":
+        loss = "CrossEntropyLoss"
     dataset_name = json_data["dataset_name"]
+    if dataset_name == "FASHIONMNIST":
+        dataset_name = "FashionMNIST"
     checkpoint_path = json_data["checkpoint_path"]
 
     # build the text files
-    build_model(layers)
+    build_model(layers, batch_size)
     build_dataset(dataset_name, batch_size, num_workers)
-    build_training_loop(epochs, learning_rate, momentum, loss, checkpoint_path)
+    build_training_loop(epochs, learning_rate, momentum, loss, checkpoint_path, dataset_name)
 
     # create a zip like object
     with ZipFile('data/flashml.zip', 'w') as zipObj:
