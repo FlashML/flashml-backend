@@ -28,8 +28,8 @@ def build_model(operations, batch_size):
         track_index[ops[0]] += 1
 
         if ops[0] == "conv2d":
-            kernel_size = ops[2]
             new_filter_size = ops[1]
+            kernel_size = ops[2]
             variable = write_conv_2d(file1, last_filter_size, new_filter_size, kernel_size, index)
             forward_operations.append(variable)
             last_filter_size = ops[1]
@@ -37,8 +37,12 @@ def build_model(operations, batch_size):
             last_height_size = last_height_size - kernel_size + 1
 
         elif ops[0] == "maxpool2d":
-            variable = write_pool_2d(file1, ops[1], ops[2], index)
+            stride = ops[1]
+            kernel_size = ops[1]
+            variable = write_pool_2d(file1, kernel_size, stride, index)
             forward_operations.append(variable)
+            last_width_size = last_width_size // kernel_size
+            last_height_size = last_height_size // kernel_size
 
         elif ops[0] == "relu":
             variable = write_relu(file1, index)
@@ -113,7 +117,10 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write("def train():\n")
     out_file.write("    transform = transforms.Compose(\n")
     out_file.write("        [transforms.ToTensor(),\n")
-    out_file.write("        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])\n")
+    if dataset_name == "CIFAR10" or dataset_name == "CIFAR100": 
+        out_file.write("        transforms.Normalize((0.0, 0.0, 0.0), (0.5, 0.5, 0.5))])\n")
+    elif dataset_name == "FashionMNIST":
+        out_file.write("        transforms.Normalize((0.0), (0.5))])\n")
     out_file.write("\n")
     out_file.write(f"    trainset = torchvision.datasets.{dataset_name}(root='./data', train=True,\n")
     out_file.write("                                        download=True, transform=transform)\n")
