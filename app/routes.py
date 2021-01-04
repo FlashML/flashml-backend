@@ -6,6 +6,10 @@ from app.model_builder import *
 
 CORS(app)
 
+@app.route("/api/ping", methods=["GET"])
+def ping():
+    return "Success"
+
 @app.route("/api/create_code", methods=["GET", "POST"])
 def model_builder():
     json_data = request.json
