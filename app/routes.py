@@ -17,6 +17,10 @@ def increment_counter():
     with open(COUNTER_FILENAME, 'w' ) as f:
         f.write(str(counter))
 
+@app.route("/api/ping", methods=["GET"])
+def ping():
+    return "Success"
+
 @app.route("/api/create_code", methods=["GET", "POST"])
 def model_builder():
     increment_counter()

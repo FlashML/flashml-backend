@@ -113,6 +113,9 @@ def build_dataset(dataset_name, batch_size, num_workers):
     out_file.write("import torch.nn as nn\n")
     out_file.write("import torchvision\n")
     out_file.write("import torchvision.transforms as transforms\n")
+    out_file.write("import torch.optim as optim\n")
+    out_file.write("from model import Net\n")
+    out_file.write("torch.manual_seed(0)\n")
     out_file.write("\n")
     out_file.write("def train():\n")
     out_file.write("    transform = transforms.Compose(\n")
@@ -137,15 +140,14 @@ def build_dataset(dataset_name, batch_size, num_workers):
 def build_training_loop(epoch, lr, momentum, loss, PATH, dataset_name):
     file1 = open("data/train.py", "a")
     file1.write("\n")
-    file1.write("    from model import Net\n")
-    file1.write("    import torch.optim as optim\n")
-    file1.write("\n")
     file1.write("    net = Net()\n")
     file1.write(f"    criterion = nn.{loss}()\n")
     file1.write(f"    optimizer = optim.SGD(net.parameters(), lr={lr}, momentum={momentum})\n")
     file1.write("\n")
     file1.write(f"    for EPOCH in range({epoch}):\n")
     file1.write("        running_loss = 0.0\n")
+    file1.write("        running_accuracy = 0.0\n")
+    file1.write("        best_test_accuracy = 0.0\n")
     file1.write("        for i, data in enumerate(trainloader, 0):\n")
     file1.write("            # get the inputs; data is a list of [inputs, labels]\n")
     file1.write("            inputs, labels = data\n")
@@ -156,9 +158,9 @@ def build_training_loop(epoch, lr, momentum, loss, PATH, dataset_name):
     file1.write("            # forward + backward + optimize\n")
     file1.write("            outputs = net(inputs)\n")
     if loss == "MSELoss" or loss == "L1Loss":
-        if dataset_name == "CIFAR-10" or dataset_name == "FashionMNIST":
+        if dataset_name == "CIFAR10" or dataset_name == "FashionMNIST":
             num_classes = 10
-        elif dataset_name == "CIFAR-100":
+        elif dataset_name == "CIFAR100":
             num_classes = 100
         file1.write(f"            labels = nn.functional.one_hot(labels, num_classes={num_classes}).float()\n")
     file1.write("            loss = criterion(outputs, labels)\n")
@@ -167,20 +169,54 @@ def build_training_loop(epoch, lr, momentum, loss, PATH, dataset_name):
     file1.write("\n")
     file1.write("            # print statistics\n")
     file1.write("            running_loss += loss.item()\n")
+    file1.write("            running_accuracy += (torch.argmax(outputs, 1) == torch.argmax(labels, 1)).float().sum()\n")
     file1.write("            PRINT_CYCLE = 100\n")
     file1.write("            if i % PRINT_CYCLE  == 0 and i != 0: # print every PRINT_CYCLE mini-batches\n")
-    file1.write("                print('[%d, %5d] loss: %.3f' %\n")
-    file1.write("                    (EPOCH, i, running_loss / PRINT_CYCLE))\n")
+    file1.write("                print('[%d, %5d] loss: %.4f | accuracy: %.4f' %\n")
+    file1.write("                    (EPOCH, i, running_loss / PRINT_CYCLE, \n")
+    file1.write("                    running_accuracy / (inputs.shape[0] * PRINT_CYCLE)))\n")
     file1.write("                running_loss = 0.0\n")
-    file1.write("        torch.save(dict(epoch=EPOCH,\n")
-    file1.write("                   model_state_dict= net.state_dict(),\n")
-    file1.write("                   optimizer_state_dict= optimizer.state_dict(),\n")
-    file1.write("                   loss= loss,\n")
-    file1.write(f"                  ), '{PATH}')\n")
+    file1.write("                running_accuracy = 0.0\n")
+    file1.write("\n")
+    file1.write("        TEST_CYCLE = 1\n")
+    file1.write("        if EPOCH % TEST_CYCLE == 0 and i != 0:\n")
+    file1.write("            test_loss, test_accuracy = test(net, testloader, criterion)\n")
+    file1.write("\n")
+    file1.write("            print('Testset: loss: %.4f | accuracy: %.4f' %\n")
+    file1.write("                (test_loss, test_accuracy))\n")
+    file1.write("\n")
+    file1.write("            if test_accuracy > best_test_accuracy:\n")
+    file1.write("                torch.save(dict(epoch=EPOCH,\n")
+    file1.write("                    model_state_dict= net.state_dict(),\n")
+    file1.write("                    optimizer_state_dict= optimizer.state_dict(),\n")
+    file1.write("                    loss= loss,\n")
+    file1.write(f"                   ), '{PATH}')\n")
+    file1.write("\n")
+    file1.write("                best_test_accuracy = test_accuracy")
     file1.write("\n")
     file1.write("    print('Finished Training')\n")
+    file1.write("\n\n")
+    file1.write("def test(net, testloader, criterion):\n")
+    file1.write("   running_loss = 0.0\n")
+    file1.write("   running_accuracy = 0.0\n")
+    file1.write("   for i, data in enumerate(testloader, 0):\n")
+    file1.write("       inputs, labels = data\n")
+    file1.write("       outputs= net(inputs)\n")
+    if loss == "MSELoss" or loss == "L1Loss":
+        if dataset_name == "CIFAR10" or dataset_name == "FashionMNIST":
+            num_classes = 10
+        elif dataset_name == "CIFAR100":
+            num_classes = 100
+        file1.write(f"       labels = nn.functional.one_hot(labels, num_classes={num_classes}).float()\n")
+    file1.write("       loss = criterion(outputs, labels)\n")
     file1.write("\n")
+    file1.write("       running_loss += loss.item()\n")
+    file1.write("       running_accuracy += (torch.argmax(outputs, 1) == torch.argmax(labels,1)).float().sum()\n")
+    file1.write("   test_loss = running_loss / len(testloader)\n")
+    file1.write("   test_accuracy = running_accuracy / len(testloader.dataset)\n")
+    file1.write("\n")
+    file1.write("   return test_loss, test_accuracy\n")
+
     file1.write("if __name__=='__main__':\n")
     file1.write("    train()")
-
 
