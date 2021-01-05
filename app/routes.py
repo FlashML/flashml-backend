@@ -6,8 +6,21 @@ from app.model_builder import *
 
 CORS(app)
 
+COUNTER_FILENAME = 'count.txt'
+def increment_counter():
+    try:
+        with open(COUNTER_FILENAME, 'r' ) as f:
+            counter = int(f.readline()) + 1
+    except FileNotFoundError:
+        counter = 1
+
+    with open(COUNTER_FILENAME, 'w' ) as f:
+        f.write(str(counter))
+
 @app.route("/api/create_code", methods=["GET", "POST"])
 def model_builder():
+    increment_counter()
+
     json_data = request.json
     print(json_data)
     # extract the required parameters

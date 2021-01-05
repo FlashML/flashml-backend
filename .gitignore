@@ -2,6 +2,8 @@ model.py
 train.py
 flashml.zip
 
+count.txt
+
 *.swp
 
 __pycache__/
